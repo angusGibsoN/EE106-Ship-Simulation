@@ -1,0 +1,28 @@
+import pygame
+pygame.init()
+width, height = 1200, 700
+screen = pygame.display.set_mode((width,height))
+pygame.display.set_caption("Autonomous Ship Simulation")
+
+
+#Colors
+blue= (100, 190, 230)
+red=(255, 0, 0)
+
+#Ship
+def make_ship(ship_width,ship_height,x,y):
+    pygame.draw.rect(screen, red, (x,y, ship_width, ship_height))
+    
+
+#background
+land = pygame.image.load("earth 2.png")
+landrect=land.get_rect()
+landrect.x=width
+landrect.y=height
+screen.fill(blue)
+screenUpdate = pygame.transform.scale(land, (width,height))
+        
+# Update
+screen.blit(screenUpdate,(0,0))
+ship= make_ship(10,7,400,233)
+pygame.display.flip()   

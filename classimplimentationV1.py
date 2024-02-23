@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 import random
+import pygame
+import sys
+import pyproj
 
+#Setup
+pygame.init()
+width, height = 1200, 700
+screen = pygame.display.set_mode((width,height))
+pygame.display.set_caption("Autonomous Ship Simulation")
+FPS = 60
+clock = pygame.time.Clock()
         
         
 class port():
@@ -10,6 +20,7 @@ class port():
         self.convertXcoord()
         self.convertYcoord()
         self.nameList()
+        #self.testTransformation()
         
     def importData(self):
         geoData = open("GeoData.csv", "r")          
@@ -52,12 +63,21 @@ class port():
         self.portName = []
         for n in range(len(self.portData)):
             self.portName.append(self.portData[n][0])
+'''            
+    def testTransformation(self):
+        p = pyproj.proj(proj='robin',ellps='WGS84', preserve_units=False)
+        x,y = p(self.portData[n][2], self.portData[n][1])
+        self.portData[n][2], self.portData[n][1] = p(x, y, inverse=True) # inverse transform
+'''       
+       
+                
+                
             
-    def isPortFull(self, index):
+   # def isPortFull(self, index):
         
         
-      
-class ship():
+     
+class shipClass():
     def __init__(self):
         self.shipSpeed = self.setSpeed()
         self.shipCat = self.setCat()
@@ -74,8 +94,48 @@ class ship():
         else:
             cat = "M"
         return cat
-            
+         
+portList = port()    
 
-portList = port()
-print(portList.portName)
 
+
+blue= (100, 190, 230)
+red=(255, 0, 0)
+green=(31,96,35)
+
+#Ship
+def make_ship(ship_width,ship_height,x,y,speed):
+    ship=pygame.draw.rect(screen, red, (x,y, ship_width, ship_height))
+    return ship
+
+
+
+#background
+land = pygame.image.load("earth 2.png").convert_alpha()
+screenUpdate = pygame.transform.scale(land, (width,height))
+mask= pygame.mask.from_surface(screenUpdate)
+masksurface=mask.to_surface()
+
+     
+#Update
+screen.fill(blue)
+screen.blit(screenUpdate,(0,0))
+ship=make_ship(10,7,300,200,5)
+ship_mask= pygame.mask.Mask((10,7))
+ship_mask.fill()
+for n in range(len(portList.portName)):
+    pygame.draw.circle(screen,(255,0,144),(portList.xCoord[n],portList.yCoord[n]),4)
+pygame.display.flip()  
+clock.tick(FPS)
+
+
+
+if mask.overlap(ship_mask,((300,200))):
+    print("true")
+    
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()

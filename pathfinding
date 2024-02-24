@@ -49,19 +49,17 @@ def pathfinding(world, start, end):
             newpos = Pos(testpos, currentpos)
             children.append(newpos)
         
-        for child in children:
-            if child in closedlist:
+        for i in children:
+            if i in closedlist:
                 continue
             
-            child.g = currentpos.g + 1
-            child.h = ((child.place[0] - endpos.place[0]) ** 2) + ((child.place[1] - endpos.place[1]) ** 2)
-            child.f = child.g + child.h
+            i.g = currentpos.g + 1
+            i.h = ((i.place[0] - endpos.place[0]) ** 2) + ((i.place[1] - endpos.place[1]) ** 2)
+            i.f = i.g + i.h
             
-            for open_node in openlist:
-                if child == open_node and child.g > open_node.g:
-                    break
-            else:
-                openlist.append(child)
+            for j in openlist:
+                if i == j and i.g > j.g:  
+                    openlist.append(i)
 
 
 maze = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

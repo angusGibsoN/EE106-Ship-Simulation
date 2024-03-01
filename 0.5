@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Feb 28 17:03:40 2024
-
-@author: natha
-"""
-
 import pygame
 import sys
 import math
@@ -19,7 +12,7 @@ pygame.display.set_caption("Autonomous Ship Simulation")
 
 
 
-
+#pathfinding and storing nodes
 
 class Pos():    #class for locations on the map
     def __init__(self, place, parent):
@@ -109,8 +102,10 @@ def pathfinding(world, start, end):
             else:
                 #add coord to openlist
                 openlist.append(i) 
+                print(len(openlist))
 
 
+#port implementation
 
 def importData():                               ## defines Function called importData
     geoData = open("GeoData.csv", "r")          ## defines variable that contains the csv file in read mode
@@ -178,7 +173,7 @@ class ship():
         self.x=x
         self.y=y
         if size== "small":
-            self.speed=150
+            self.speed=350
             self.ship_height=7
             self.ship_width=7
             self.colour=red
@@ -210,10 +205,7 @@ def moveship(ships):
         path = pathfinding(tiles, (ship.x, ship.y), ship.goal)
         paths.append(path)
         ship.totaltravelled += math.sqrt(((ship.goal[0] - ship.x) ** 2) + ((ship.goal[1] - ship.y) ** 2))
-
-    maxlength = max(len(path) for path in paths)
-
-    for i in range(maxlength):
+    for i in range(max(len(path) for path in paths)):
         screen.fill(blue)
         screen.blit(screenUpdate, (0, 0))
         for j, ship in enumerate(ships):
@@ -224,11 +216,11 @@ def moveship(ships):
                 ship.item = pygame.Rect(ship.x, ship.y, ship.ship_width, ship.ship_height)
                 pygame.draw.rect(screen, ship.colour, ship.item)
             else:
-                pygame.draw.rect(screen, ship.colour, ship.item)  # Keep the ship at its last position
+                pygame.draw.rect(screen, ship.colour, ship.item)
         pygame.display.flip()
-        pygame.time.delay(int(max_speed * 0.8))  # Adjust the coefficient to suit your preference
+        pygame.time.delay(int(max_speed))  
 
-# Update
+# Update and main loop
 
 screen.fill(blue)
 screen.blit(screenUpdate, (0, 0))
@@ -241,11 +233,12 @@ for y in range(height):
             tiles[y][x] = 0
         else:
             tiles[y][x] = 1
+portpath1= pathfinding(tiles,(54,70),(75,214))
 
 ships = [
-    ship(0, 0, "medium", True, (9, 7)),
-    ship(30, 30, "small", False, (9, 7)),
-    ship(30, 70, "large", False, (9,7))
+    #ship(0, 0, "medium", True, (159,440 )),
+    #ship(30, 30, "small", False, (9, 7)),
+    #ship(30, 70, "large", False, (9,7))
 ]
 
 while True:

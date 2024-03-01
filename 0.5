@@ -1,0 +1,259 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 28 17:03:40 2024
+
+@author: natha
+"""
+
+import pygame
+import sys
+import math
+import random
+#Setup
+pygame.init()
+width, height = 1200, 700
+screen = pygame.display.set_mode((width,height))
+pygame.display.set_caption("Autonomous Ship Simulation")
+
+
+
+
+
+
+
+class Pos():    #class for locations on the map
+    def __init__(self, place, parent):
+        self.place = place  #coordinates of location
+        self.parent = parent #parent position used to trace back the path
+        self.f = 0 #g+h
+        self.g = 0  #g is the cost to move to the tile from the start position linear movement adds 1 diagonal movement adds root 2
+        self.h = 0 #heuristic cost from the tile to the goal
+        
+
+def pathfinding(world, start, end): 
+    startpos = Pos(start, None) 
+    endpos = Pos(end, None)
+    
+    openlist = [startpos]
+    closedlist = []
+    
+    
+    #loops path until it reaches the end
+    while len(openlist) !=0:
+        
+        #grabs current coordinate
+        currentpos = openlist[0]
+        currenti = 0
+        
+        
+        
+        #checks if current coordinates f value > the other values on openlist
+        for i, pos in enumerate(openlist):
+            if pos.f < currentpos.f:
+                currentpos = pos
+                currenti = i
+                
+        openlist.pop(currenti)
+        closedlist.append(currentpos)
+       
+        #when the end is found create the path
+        if currentpos.place == endpos.place:
+            path = []
+            current = currentpos
+            while current is not None:
+                path.append(current.place)
+                current = current.parent
+            return path[::-1]
+        
+        
+        #generates children coordinates
+        children = []
+        for i in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            
+            testpos = (currentpos.place[0] + i[0], currentpos.place[1] + i[1])
+            
+            #makes sure its actually on the map
+            if (testpos[0] < 0 or testpos[0] >= len(world) or testpos[1] < 0 or testpos[1] >= len(world[0])):
+                continue
+            
+            #and that the value on the list isnt 0 (its not an obstacle)
+            if world[testpos[0]][testpos[1]] != 0:
+                continue
+            
+            #once checks have been done add it to the list of children
+            newpos = Pos(testpos, currentpos)
+            children.append(newpos)
+        
+        
+        #loop through children coords
+        for i in children:
+            
+            #is it on the closed list?
+            for j in closedlist:
+                if i == j:
+                    continue
+            
+            if i.place[0] != 0 and i.place[1] != 0:  # if its a diagonal
+                i.g = currentpos.g + math.sqrt(2)  
+            else:i.g = currentpos.g + 1 #if its linearly relative
+            i.h = math.sqrt((i.place[0] - endpos.place[0]) ** 2) + ((i.place[1] - endpos.place[1]) ** 2) #euclidian distance
+            i.f = i.g + i.h #f value
+            
+            
+            #is it on the openlist? and is its g value greater than the other instances g value
+            for j in openlist:
+                if i == j and i.g > j.g:  
+                    j.g = i.g
+                    j.parent = currentpos  
+                    break
+            else:
+                #add coord to openlist
+                openlist.append(i) 
+
+
+
+def importData():                               ## defines Function called importData
+    geoData = open("GeoData.csv", "r")          ## defines variable that contains the csv file in read mode
+    tempString = geoData.read()                 ## defines a variable that contains a string of the raw data in the csv file
+    templist1 = tempString.splitlines()         ## defines variable that is a list where each element is a string containing a line of the raw data
+    tempLen1 = len(templist1)                   ## defines variable that is the number of elements in the list tempList1
+    datalist = []                               ## defines empty list
+    for n in range(tempLen1 - 1):               ## starts a for loop that has index n that increases from 0 by 1 each time until it reaches 1 less than tempLen1
+        tempData1 = templist1[n +1]             ## defines varaiable that stoes data from the current(Nth + 1 term) element in tempList1
+        tempList2 = tempData1.split(",")        ## defines a list where each element is a string that has been split by the comma form tempData1
+        datalist.append(tempList2)              ## adds a new element to the list datalist where each new elemtn is a list in on of its self and is the current list in tempList2
+    return datalist                             ## returns datalist after for loop is complete
+
+
+def cleanUpData(portDataOld):                   ## defines funtion cleanUpData with data being passed in 
+    newData = portDataOld                       ## defines variable newData that is the passed in data
+    for n in range(len(portDataOld)):           ## starts for loop that has index n thats starts at 0 and increaes by 1 each loop until it reaches the number of elements - 1 in the newData
+        for x in range(2):                      ## starts for loop where index x starts at 0 and increses to 1
+            newData[n][x+1] = portDataOld[n][x+1].replace("Â","") ## replaces the character Â with nothing in the second and third element of each list within each element (That doesnt make sense)
+    return newData                              ## returns new data
+
+
+def convertXcoord(portData):
+    for n in range(len(portData)):
+        index = portData[n][2].rfind("°")
+        xMinute = portData[n][2][index + 1:index + 3]
+        degreeDecimal = int(xMinute)/60
+        xDegrees = int(portData[n][2][1:index]) + degreeDecimal
+        scaledCoord = (float(xDegrees)/180)*600
+        test = "W" in portData[n][2]
+        if test == True:
+            xCoord = 520 - scaledCoord
+        else:
+            xCoord = 520 + scaledCoord
+        portData[n][2] = xCoord
+    return portData
+
+
+portData = importData()                         ## calls the function importData and assigns its pass out into a variable
+portData = cleanUpData(portData)
+portData = convertXcoord(portData)
+
+#Colors
+blue= (100, 190, 230)
+red=(255, 0, 0)
+green=(31,96,35)
+gray=(128,128,128)
+pink=(220,69,136)
+
+
+
+
+
+
+#background
+land = pygame.image.load("earth 2.png").convert_alpha()
+screenUpdate = pygame.transform.scale(land, (width,height))
+mask= pygame.mask.from_surface(screenUpdate)
+masksurface=mask.to_surface()
+landrect=screenUpdate.get_rect()
+
+#Ship
+class ship():
+    def __init__(self,x,y,size,selfish,goal):
+        self.x=x
+        self.y=y
+        if size== "small":
+            self.speed=150
+            self.ship_height=7
+            self.ship_width=7
+            self.colour=red
+        elif size== "medium":
+            self.speed= 250
+            self.ship_height=12
+            self.ship_width=12
+            self.colour=pink
+        elif size== "large":
+             self.speed= 350
+             self.ship_height=15
+             self.ship_width=15
+             self.colour=gray
+             
+        self.item=pygame.Rect(x,y,self.ship_width,self.ship_height)
+        self.totaltravelled=0
+        self.collisions=0
+        self.selfish=selfish
+        self.goal=goal
+        pygame.draw.rect(screen,self.colour,self.item)       
+        
+        
+
+def moveship(ships):
+    paths = []
+    max_speed = max(ship.speed for ship in ships)
+
+    for ship in ships:
+        path = pathfinding(tiles, (ship.x, ship.y), ship.goal)
+        paths.append(path)
+        ship.totaltravelled += math.sqrt(((ship.goal[0] - ship.x) ** 2) + ((ship.goal[1] - ship.y) ** 2))
+
+    maxlength = max(len(path) for path in paths)
+
+    for i in range(maxlength):
+        screen.fill(blue)
+        screen.blit(screenUpdate, (0, 0))
+        for j, ship in enumerate(ships):
+            if i < len(paths[j]):
+                coord = paths[j][i]
+                ship.x = coord[0]
+                ship.y = coord[1]
+                ship.item = pygame.Rect(ship.x, ship.y, ship.ship_width, ship.ship_height)
+                pygame.draw.rect(screen, ship.colour, ship.item)
+            else:
+                pygame.draw.rect(screen, ship.colour, ship.item)  # Keep the ship at its last position
+        pygame.display.flip()
+        pygame.time.delay(int(max_speed * 0.8))  # Adjust the coefficient to suit your preference
+
+# Update
+
+screen.fill(blue)
+screen.blit(screenUpdate, (0, 0))
+
+tiles = [[0 for i in range(width)] for i in range(height)]
+
+for y in range(height):
+    for x in range(width):
+        if screen.get_at((x, y)) == blue:
+            tiles[y][x] = 0
+        else:
+            tiles[y][x] = 1
+
+ships = [
+    ship(0, 0, "medium", True, (9, 7)),
+    ship(30, 30, "small", False, (9, 7)),
+    ship(30, 70, "large", False, (9,7))
+]
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    moveship(ships)
+
+    pygame.display.flip()

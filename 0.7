@@ -1,0 +1,224 @@
+import pygame
+import sys
+import math
+import random
+import heapq
+#Setup
+pygame.init()
+width, height = 1200 ,700
+screen = pygame.display.set_mode((width,height))
+pygame.display.set_caption("Autonomous Ship Simulation")
+
+def dijkstra(world,start,goal):
+    rows=1200
+    col=700
+    directions = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]
+    visited= set()
+    heap= [(0,start)]
+    costs={start:0}
+    camefrom={}
+    while len(heap)>0:
+        currentcost,currentloc=heapq.heappop(heap)
+        if currentloc== goal:
+            path=[]
+            while currentloc in camefrom:
+                path.insert(0,currentloc)
+                currentloc=camefrom[currentloc]
+            path.insert(0,start)
+            return currentcost,path
+        if currentloc in visited:
+            continue
+        visited.add(currentloc)
+        for optionx,optiony in directions:
+            newx=currentloc[0]+optionx
+            newy=currentloc[1]+optiony
+            if newx>=0 and rows > newx and col > newy and newy >=0:
+                newloc=(newx,newy)
+                if newloc not in visited:
+                    newcost=currentcost+ world[newy][newx]
+                    if newloc not in costs or costs[newloc]>newcost:
+                        costs[newloc]=newcost
+                        heapq.heappush(heap, (newcost,newloc))
+                        camefrom[newloc]=currentloc
+    return float('inf'),[]
+                
+    
+
+
+
+def importData():                               ## defines Function called importData
+    geoData = open("GeoData.csv", "r")          ## defines variable that contains the csv file in read mode
+    tempString = geoData.read()                 ## defines a variable that contains a string of the raw data in the csv file
+    templist1 = tempString.splitlines()         ## defines variable that is a list where each element is a string containing a line of the raw data
+    tempLen1 = len(templist1)                   ## defines variable that is the number of elements in the list tempList1
+    datalist = []                               ## defines empty list
+    for n in range(tempLen1 - 1):               ## starts a for loop that has index n that increases from 0 by 1 each time until it reaches 1 less than tempLen1
+        tempData1 = templist1[n +1]             ## defines varaiable that stoes data from the current(Nth + 1 term) element in tempList1
+        tempList2 = tempData1.split(",")        ## defines a list where each element is a string that has been split by the comma form tempData1
+        datalist.append(tempList2)              ## adds a new element to the list datalist where each new elemtn is a list in on of its self and is the current list in tempList2
+    return datalist                             ## returns datalist after for loop is complete
+
+
+def cleanUpData(portDataOld):                   ## defines funtion cleanUpData with data being passed in 
+    newData = portDataOld                       ## defines variable newData that is the passed in data
+    for n in range(len(portDataOld)):           ## starts for loop that has index n thats starts at 0 and increaes by 1 each loop until it reaches the number of elements - 1 in the newData
+        for x in range(2):                      ## starts for loop where index x starts at 0 and increses to 1
+            newData[n][x+1] = portDataOld[n][x+1].replace("Â","") ## replaces the character Â with nothing in the second and third element of each list within each element (That doesnt make sense)
+    return newData                              ## returns new data
+
+
+def convertXcoord(portData):
+    for n in range(len(portData)):
+        index = portData[n][2].rfind("°")
+        xMinute = portData[n][2][index + 1:index + 3]
+        degreeDecimal = int(xMinute)/60
+        xDegrees = int(portData[n][2][1:index]) + degreeDecimal
+        scaledCoord = (float(xDegrees)/180)*600
+        test = "W" in portData[n][2]
+        if test == True:
+            xCoord = 520 - scaledCoord
+        else:
+            xCoord = 520 + scaledCoord
+        portData[n][2] = xCoord
+    return portData
+
+
+portData = importData()                         ## calls the function importData and assigns its pass out into a variable
+portData = cleanUpData(portData)
+portData = convertXcoord(portData)
+
+#Colors
+blue= (100, 190, 230)
+red=(255, 0, 0)
+green=(31,96,35)
+gray=(128,128,128)
+pink=(220,69,136)
+
+
+
+
+
+
+#background
+land = pygame.image.load("earth 2.png").convert_alpha()
+screenUpdate = pygame.transform.scale(land, (width,height))
+mask= pygame.mask.from_surface(screenUpdate)
+masksurface=mask.to_surface()
+landrect=screenUpdate.get_rect()
+
+#Ship
+class ship():
+    def __init__(self,x,y,size,selfish,goal):
+        self.x=x
+        self.y=y
+        self.size=size
+        if size== "small":
+            self.ship_height=7
+            self.ship_width=7
+            self.colour=red
+        elif size== "medium":
+            self.ship_height=12
+            self.ship_width=12
+            self.colour=pink
+        elif size== "large":
+             self.ship_height=15
+             self.ship_width=15
+             self.colour=gray
+             
+        self.item=pygame.Rect(x,y,self.ship_width,self.ship_height)
+        self.totaltravelled=0
+        self.collisions=0
+        self.selfish=selfish
+        self.goal=goal
+        pygame.draw.rect(screen,self.colour,self.item)       
+        
+
+
+        
+# Update
+
+screen.fill(blue)
+screen.blit(screenUpdate, (0, 0))
+
+tiles = [[0 for i in range(width)] for i in range(height)]
+
+for y in range(height):
+    for x in range(width):
+        if screen.get_at((x, y)) == blue:
+            tiles[y][x] = 1
+        else:
+            tiles[y][x] = 10000000000000000000
+
+
+
+
+
+ships = [
+    ship(0, 0, "medium", True, (1199, 699)),
+    ship(0, 0, "small", True, (1199,699)),
+    #ship(30, 70, "large", False, (800,320))
+]               
+
+def moveship(ships):
+    paths = []
+    originalgoal=[]
+    for ship in ships:
+        cost,path = dijkstra(tiles, (ship.x, ship.y), ship.goal)
+        print(path)
+        print(cost)
+        paths.append(path)
+        originalgoal.append(ship.goal)
+    while (paths for path in paths):
+        screen.fill(blue)
+        screen.blit(screenUpdate, (0, 0))
+        for j, ship in enumerate(ships):
+            if len(paths[j])>0:
+                (prevx, prevy) = (ship.x, ship.y)
+                (ship.x,ship.y) = paths[j][0]
+                ship.totaltravelled+=math.sqrt(((ship.x - prevx) ** 2) + ((ship.y - prevy) ** 2))
+                ship.item = pygame.Rect(ship.x, ship.y, ship.ship_width, ship.ship_height)
+                pygame.draw.rect(screen, ship.colour, ship.item)
+                if ship.size=="large":
+                    paths[j] = paths[j][1:]
+                elif ship.size=="medium":
+                    paths[j] = paths[j][2:]
+                else:paths[j] = paths[j][3:]
+
+                    
+                
+                for othership in ships:
+                    if othership != ship and ship.item.colliderect(othership.item) and not ship.selfish:
+                        ship.collisions+=1
+                        newgoal = (ship.x+random.randint(-20, 20),ship.y +random.randint(-20, 20))
+                        cost, newpath = dijkstra(tiles, (ship.x, ship.y), newgoal)
+                        print(newpath)
+                        ship.goal = newgoal
+                        paths[j] = newpath
+                        ship.selfish=True
+                # If the ship has reached its original goal after avoiding the collision, restore the original goal
+                if ship.goal == (ship.x, ship.y) and ship.goal != originalgoal[j]:
+                    ship.goal = originalgoal[j]
+                    cost, newpath = dijkstra(tiles, (ship.x, ship.y), ship.goal)
+                    print(newpath)
+                    paths[j] = newpath
+                    ship.selfish=False
+                    
+                else: continue
+        pygame.display.flip()
+        pygame.time.delay(350)
+    screen.fill(blue)
+    screen.blit(screenUpdate, (0, 0))
+    pygame.display.flip()
+    
+
+
+    
+moveship(ships)
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+

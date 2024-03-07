@@ -1,0 +1,12 @@
+PortName,Latitude,Longitude
+ZeroZero,00°00'00''N,00°00'00''W
+MostNorth,90°00'00''N,00°00'00''W
+MostSouth,90°00'00''S,00°00'00''W
+MostWest,00°00'00''N,180°00'00''W
+MostEast,00°00'00''N,180°00'00''E
+NorthWest,90°00'00''N,180°00'00''W
+NorthEast,90°00'00''N,180°00'00''E
+SouthWest,90°00'00''S,180°00'00''W
+SouthEast,90°00'00''S,180°00'00''E
+HalfWest,00°00'00''N,90°00'00''W
+HalfEast,00°00'00''N,90°00'00''E

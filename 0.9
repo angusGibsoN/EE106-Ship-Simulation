@@ -47,13 +47,13 @@ def dijkstra(world,start,goal):
                 
     
 
-
+#defines class 'port'
 class port():
     def __init__(self):
         self.importData()
         self.dataCleanup()
         self.nameList()
-        self.testTransformation()
+        self.coordTransformation()
         self.docked = [0] * len(self.portName)
         
     def importData(self):
@@ -77,7 +77,7 @@ class port():
         for n in range(len(self.portData)):
             self.portName.append(self.portData[n][0])
  
-    def testTransformation(self):
+    def coordTransformation(self):
         p = Proj(proj='robin',ellps='WGS84', preserve_units=True)
         x = []
         y = []
@@ -86,6 +86,7 @@ class port():
             y.append(0)
             scaledXCoord = []
             scaledYCoord = []
+            
         for n in range(len(self.portData)):
             indexX = self.portData[n][2].rfind("°") 
             minuteX = int(self.portData[n][2][indexX + 1:indexX + 3])
@@ -106,18 +107,14 @@ class port():
             else:
                 scaledYCoord.append(float(-1*(degreeY + minuteY)))
          
-         
         for n in range(len(self.portData)):
              x[n],y[n] = p(scaledXCoord[n], scaledYCoord[n])
-     
-       
+
         self.x2 = []
         self.y2 = []
         for n in range(len(x)):
             self.x2.append(int(595-((x[n]/30000000)*1386)))
             self.y2.append(int(398-((y[n]/14650000)*684)))
-  
-            
   
 portlist = port()    
 
@@ -130,8 +127,6 @@ green=(31,96,35)
 gray=(128,128,128)
 pink=(220,69,136)
 purple= (255,0,144)
-
-
 
 
 

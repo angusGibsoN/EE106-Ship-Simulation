@@ -181,8 +181,8 @@ class ship():
         
     def isAlturistic(self,prevx,prevy,index):
         if self.selfish != True:
-            self.crashDetection(prevx,prevy,index)
-        return self.crashDetection(prevx, prevy, index)
+            bool = self.crashDetection(prevx,prevy,index)
+        return bool
             
     def crashDetection(self,prevx,prevy,index):
         if index == 0:
@@ -258,7 +258,8 @@ def moveship(ships):
                     ship.totaltravelled += math.sqrt(((ship.x - prevx) ** 2) + ((ship.y - prevy) ** 2))
                     ship.item = pygame.Rect(ship.x, ship.y, ship.ship_width, ship.ship_height)
                     pygame.draw.rect(screen, ship.colour, ship.item)
-                    if ship.isAlturistic(prevx,prevy,j) == True:
+                    isCrash = ship.isAlturistic(prevx,prevy,j)
+                    if isCrash == True:
                         if ship.size == "large":
                             paths[j] = paths[j][0:]
                         elif ship.size == "medium":

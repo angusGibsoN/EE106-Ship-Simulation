@@ -133,9 +133,6 @@ purple= (255,0,144)
 
 
 
-
-
-
 #background
 land = pygame.image.load("earth 2.png").convert_alpha()
 screenUpdate = pygame.transform.scale(land, (width,height))

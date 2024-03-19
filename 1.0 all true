@@ -139,9 +139,6 @@ purple= (255,0,144)
 #background
 land = pygame.image.load("earth 2.png").convert_alpha()
 screenUpdate = pygame.transform.scale(land, (width,height))
-mask= pygame.mask.from_surface(screenUpdate)
-masksurface=mask.to_surface()
-landrect=screenUpdate.get_rect()
 
 #Ship
 class ship():
